@@ -1,8 +1,51 @@
 import React, { useState } from "react";
-import { FaWallet, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { loginUser } from "../service/authService";
+import {
+  FaWallet,
+  FaEnvelope,
+  FaLock,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setError("Email and Password are required");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await loginUser({
+        email,
+        password,
+      });
+
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("email", response.email);
+
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-6">
@@ -22,6 +65,7 @@ export default function LoginPage() {
                 <h1 className="text-2xl font-bold text-white">
                   FinanceTracker
                 </h1>
+
                 <p className="text-slate-400 text-sm">
                   Smart Personal Finance
                 </p>
@@ -38,6 +82,7 @@ export default function LoginPage() {
               Sign in to continue tracking your expenses,
               managing budgets, and growing your savings.
             </p>
+
           </div>
 
           {/* Right Side */}
@@ -51,14 +96,17 @@ export default function LoginPage() {
               Access your FinanceTracker account
             </p>
 
-            <form className="space-y-5">
+            <form className="space-y-5" onSubmit={handleSubmit}>
 
               <div className="relative">
                 <FaEnvelope className="absolute left-4 top-4 text-slate-500" />
 
                 <input
                   type="email"
+                  required
                   placeholder="Email Address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-white"
                 />
               </div>
@@ -68,7 +116,10 @@ export default function LoginPage() {
 
                 <input
                   type={showPassword ? "text" : "password"}
+                  required
                   placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-12 pr-12 text-white"
                 />
 
@@ -92,17 +143,26 @@ export default function LoginPage() {
                 </a>
               </div>
 
+              {error && (
+                <p className="text-red-500 text-sm">
+                  {error}
+                </p>
+              )}
+
               <button
                 type="submit"
-                className="w-full bg-white text-slate-900 font-semibold py-3 rounded-xl"
+                disabled={loading || !email || !password}
+                className="w-full bg-white text-slate-900 font-semibold py-3 rounded-xl disabled:opacity-50"
               >
-                Login
+                {loading ? "Logging in..." : "Login"}
               </button>
 
             </form>
 
           </div>
+
         </div>
+
       </div>
     </div>
   );
